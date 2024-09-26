@@ -1,0 +1,96 @@
+---
+title: "dash.Rmd"
+output: html_document
+date: "2024-04-25"
+---
+
+library(flexdashboard)
+library(readxl)
+library(gt)
+library(tidyverse)
+library(htmltools)
+library(viridis)
+library(highcharter)
+library(dplyr)
+library(ggplot2)
+data<-read_excel("C:\\Users\\mudir\\Downloads\\int217\\CoffeeChainAnalysis.xlsx")
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r,echo=FALSE}
+sales_summary <- data %>%
+  group_by(Territory, `Product Line`) %>%
+  summarise(Total_Sales = sum(Sales))
+ggplot(sales_summary, aes(x = Territory, y = `Total_Sales`, fill = `Product Line`)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Total Sales in Each Territory by Product Line",
+       x = "Territory",
+       y = "Total Sales",
+       fill = "Product Line")
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r,echo=FALSE}
+
+
+measures_summary <- data %>%
+  group_by(`Product Line`) %>%
+  summarise(Profit = sum(Profit), Sales = sum(Sales))
+
+measures_summary_long <- measures_summary %>%
+  pivot_longer(cols = c(Profit, Sales), names_to = "Measure", values_to = "Value")
+
+ggplot(measures_summary_long, aes(x = "", y = Value, fill = Measure)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar("y") +
+  facet_wrap(~`Product Line`) +
+  labs(title = "Profit and Sales by Product Line",
+       x = NULL,
+       y = NULL,
+       fill = "Measure") +
+  theme_void() +
+  theme(legend.position = "right")
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r,echo=FALSE}
+
+sales_summary <- data %>%
+  group_by(`Product Type`, Product) %>%
+  summarise(Average_Sales = mean(Sales))
+
+# Create a line chart
+ggplot(sales_summary, aes(x = Product, y = Average_Sales, color = `Product Type`, group = `Product Type`)) +
+  geom_line() +
+  labs(title = "Average Sales by Product and Product Type",
+       x = "Product",
+       y = "Average Sales",
+       color = "Product Type")
+```
+```{r,echo=FALSE}
+
+total_sales <- sum(data$Sales)
+percentage_contribution <- data %>%
+  group_by(`Product Type`) %>%
+  summarise(Percentage_Contribution = sum(Sales) / total_sales * 100)
+
+ggplot(percentage_contribution, aes(x = reorder(`Product Type`, Percentage_Contribution), y = Percentage_Contribution, color = `Product Type`)) +
+  geom_point(size = 3) +
+  geom_text(aes(label = sprintf("%.2f%%", Percentage_Contribution)), vjust = -0.5, size = 3) +
+  labs(title = "Percentage Contribution of Different Product Types in Total Sales",
+       x = "Product Type",
+       y = "Percentage Contribution",
+       color = "Product Type") +
+  scale_color_brewer(palette = "Set1")
+```
